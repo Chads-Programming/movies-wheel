@@ -27,4 +27,15 @@ wheelsRouter.post("/", (req: Request, res: Response) => {
 	});
 });
 
+wheelsRouter.get("/:wheelId", (req: Request, res: Response) => {
+	const wheelId = req.params?.wheelId;
+	console.log({ wheelId });
+
+	const room = rooms.get(wheelId);
+	console.log({ room, rooms });
+	return res.json({
+		room,
+	});
+});
+
 export default wheelsRouter;

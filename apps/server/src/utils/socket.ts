@@ -11,8 +11,9 @@ const addProfileToSocket = (
 	isAdmin: boolean = false,
 ): SocketProfile => {
 	const socket = getSocket(socketId)!;
-	socket.data["profile"] = { ...profile, isAdmin };
-
+	socket["data"] = {
+		profile: { ...profile, isAdmin },
+	};
 	return socketId as unknown as SocketProfile;
 };
 

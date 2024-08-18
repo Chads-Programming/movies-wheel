@@ -21,13 +21,15 @@ const api = axios.create({
 	baseURL: process.env.NEXT_PUBLIC_API_URL!,
 });
 
+const val = Math.random().toFixed(4);
+
 export default function Home() {
 	const router = useRouter();
 
 	const form = useForm({
 		defaultValues: {
 			participantLimit: 1,
-			wheelName: "",
+			wheelName: `Testing ${val}`,
 		},
 		reValidateMode: "onChange",
 		resolver: zodResolver(CreateWheelDto),
@@ -39,7 +41,6 @@ export default function Home() {
 			const {
 				data: { id },
 			} = await api.post<{ id: string }>("/wheels", values);
-			return;
 			toast.success(`Wheel created ${id}`);
 			router.replace(`/wheels/${id}`);
 		} catch (error) {

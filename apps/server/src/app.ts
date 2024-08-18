@@ -32,7 +32,14 @@ export const rooms = adapter.rooms;
 
 adapter.on("join-room", (roomId, socketId) => {
 	const socket = getSocket(socketId);
+});
 
+adapter.on("rooms-participants", (...d: any) => {
+	console.log({ d });
+});
+
+io.on("rooms-participants", (...d: any) => {
+	console.log({ d });
 });
 
 io.on("connection", connectionEvent);

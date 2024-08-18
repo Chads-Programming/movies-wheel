@@ -1,32 +1,63 @@
-import { Profile } from "@repo/shared";
+import { Profile, ProfileSetupDto } from "@repo/shared";
 import { BaseSocket } from "../types/socket.type";
 import { getRoom, isEmptyRoom, isFullRoom } from "../utils/rooms";
 import { addAdmin, addProfile } from "../utils/socket";
+import { z } from "zod";
 
 type Socket = BaseSocket<any>;
 
 const decode = (encoded: string) => JSON.parse(encoded);
 
+class ConnectionError extends Error {}
+
+function parseProfile(data: unknown): Profile {
+	try {
+		const decodedProfile = decode((data as string) || "") as unknown as
+			| Profile
+			| undefined;
+
+		const profile = ProfileSetupDto.parse(decodedProfile);
+
+		return profile;
+	} catch (error) {
+		throw new ConnectionError("Invalid profile");
+	}
+}
+
 export const connectionEvent = async (socket: Socket) => {
-	const roomId = socket.handshake.query?.id;
+	const connectionError = (msg?: string) => {
+		socket.emit("connection-error", msg);
+		socket.disconnect();
+	};
 
-	const profile = decode(
-		(socket.handshake.query?.profile as string) || "",
-	) as unknown as Profile | undefined;
+	try {
+		const roomId = socket.handshake.query?.id;
 
-	if (!profile) return socket.disconnect();
-	if (typeof roomId !== "string") return socket.disconnect();
+		const profile = parseProfile(socket.handshake.query?.profile);
 
-	const room = getRoom(roomId);
-	if (!room) return socket.disconnect();
+		if (typeof roomId !== "string") throw new ConnectionError();
 
-	const isFull = isFullRoom(roomId);
-	if (isFull) socket.disconnect();
+		const room = getRoom(roomId);
 
-	const socketId = socket.id;
-	const isAdmin = isEmptyRoom(roomId);
-	if (isAdmin) addAdmin(socketId, profile);
-	else addProfile(socketId, profile);
+		if (!room) throw new ConnectionError("Room not found");
 
-	await socket.join(roomId);
+		const isFull = isFullRoom(roomId);
+
+		if (isFull) throw new ConnectionError("Room is full");
+
+		const socketId = socket.id;
+		const isAdmin = isEmptyRoom(roomId);
+
+		if (isAdmin) addAdmin(socketId, profile);
+		else addProfile(socketId, profile);
+
+		await socket.join(roomId);
+
+		socket.emit("setup-completed");
+	} catch (error: unknown) {
+		if (!(error instanceof ConnectionError))
+			return connectionError("Error while connecting");
+
+		return connectionError(error.message);
+	}
 };

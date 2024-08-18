@@ -20,7 +20,7 @@ export default function ProfileSetup({ setupProfile }: ProfileSetupProps) {
 	const form = useForm({
 		resolver: zodResolver(ProfileSetupDto),
 		defaultValues: {
-			name: "",
+			name: "testtt",
 			profilePic: "",
 		},
 	});
