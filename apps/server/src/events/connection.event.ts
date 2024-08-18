@@ -2,7 +2,7 @@ import { Profile, ProfileSetupDto } from "@repo/shared";
 import { BaseSocket } from "../types/socket.type";
 import { getRoom, isEmptyRoom, isFullRoom } from "../utils/rooms";
 import { addAdmin, addProfile } from "../utils/socket";
-import { z } from "zod";
+import GetRoomParticipants from "./room-participants.event";
 
 type Socket = BaseSocket<any>;
 
@@ -15,7 +15,7 @@ function parseProfile(data: unknown): Profile {
 		const decodedProfile = decode((data as string) || "") as unknown as
 			| Profile
 			| undefined;
-
+		console.log({ decodedProfile });
 		const profile = ProfileSetupDto.parse(decodedProfile);
 
 		return profile;
@@ -34,7 +34,7 @@ export const connectionEvent = async (socket: Socket) => {
 		const roomId = socket.handshake.query?.id;
 
 		const profile = parseProfile(socket.handshake.query?.profile);
-
+		console.log({ profile });
 		if (typeof roomId !== "string") throw new ConnectionError();
 
 		const room = getRoom(roomId);
@@ -48,10 +48,20 @@ export const connectionEvent = async (socket: Socket) => {
 		const socketId = socket.id;
 		const isAdmin = isEmptyRoom(roomId);
 
-		if (isAdmin) addAdmin(socketId, profile);
-		else addProfile(socketId, profile);
+		if (isAdmin) addAdmin(socketId, roomId, profile);
+		else addProfile(socketId, roomId, profile);
 
 		await socket.join(roomId);
+
+		socket.on("rooms-participants-with-ack", (response) => {
+			const participants = GetRoomParticipants(socket);
+			return response(participants);
+		});
+
+		socket.on("rooms-participants", () => {
+			const participants = GetRoomParticipants(socket);
+			return socket.emit("rooms-participants", participants);
+		});
 
 		socket.emit("setup-completed");
 	} catch (error: unknown) {

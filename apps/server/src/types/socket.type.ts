@@ -6,8 +6,11 @@ type Event = DefaultEventsMap;
 
 export type BaseSocket<T = SocketData> = Socket<Event, Event, Event, T>;
 
+export type ProfileWithAdmin = Profile & { isAdmin: boolean };
+
 type SocketData = {
-	profile: Profile & { isAdmin: boolean };
+	profile: ProfileWithAdmin;
+	roomId: string;
 };
 
 export type SocketProfile = BaseSocket & {

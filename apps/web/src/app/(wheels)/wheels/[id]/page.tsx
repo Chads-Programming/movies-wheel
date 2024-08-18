@@ -1,48 +1,56 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useRef, useState } from "react";
-import io, { Socket } from "socket.io-client";
 import ProfileSetup from "./components/profile-setup";
-import { Profile } from "@repo/shared";
-import { toast } from "sonner";
+import useSocket from "@/hooks/useSocket";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function WheelPage() {
 	const { id } = useParams() as { id: string };
-	const [socketClient, setSocketClient] = useState<Socket | null>(null);
-	const socketError = useRef<boolean | null>(null);
-
-	function connectSocket(profile: Profile) {
-		const socket = io(process.env.NEXT_PUBLIC_WS_SERVER!, {
-			query: {
-				id,
-				profile: JSON.stringify(profile),
-			},
-		});
-
-		socket.on("setup-completed", () => {
-			setSocketClient(socket);
-			socket.emit("rooms-participants");
-		});
-
-		socket.on("rooms-participants", (...roomData: any) =>
-			console.log({ roomData }),
-		);
-
-		socket.on("connection-error", (msg: string) => {
-			socketError.current = true;
-			if (msg) toast.error(msg);
-			setSocketClient(null);
-		});
-
-		socket.on("disconnect", () => {
-			if (socketError.current) return;
-			setSocketClient(null);
-			toast.error("Disconnecting from server");
-		});
-	}
-
+	const { socketClient, connectSocket, getParticipants, participants } =
+		useSocket();
 	if (!socketClient?.connected)
 		return <ProfileSetup setupProfile={connectSocket} />;
-	return <div>this is your wheel id: {id}</div>;
+
+	return (
+		<div className="p-2">
+			<div className="flex gap-2 items-center justify-end">
+				<Button onClick={getParticipants}>Get Participants</Button>
+				<Button onClick={() => socketClient.disconnect()}>
+					<LogOut className="h-6 w-6" />
+				</Button>
+			</div>
+			<div className="flex flex-col">
+				{participants.map((participant) => (
+					<div className="flex items-center gap-2">
+						<Avatar className="w-16 h-16">
+							<AvatarImage
+								className="rounded-full"
+								style={{
+									borderStyle: "solid",
+									borderWidth: "5px",
+									borderColor: participant.color,
+								}}
+								color="orange"
+								src={participant.profilePic}
+							/>
+							<AvatarFallback style={{ background: participant.color }}>
+								{nameToLogo(participant.name)}
+							</AvatarFallback>
+						</Avatar>
+						<span>- {participant.name}</span>
+					</div>
+				))}
+			</div>
+			this is your wheel id: {id}{" "}
+		</div>
+	);
+}
+
+function nameToLogo(word: string) {
+	const [name, lastName] = word.split(" ");
+	if (!lastName) return name.slice(0, 2);
+	return [name[0], lastName[0]].join(" ");
 }

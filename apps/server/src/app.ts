@@ -6,6 +6,7 @@ import bodyParser from "body-parser";
 import wheelsRouter from "./routers/wheels.controller";
 import { getSocket } from "./utils/socket";
 import { connectionEvent } from "./events/connection.event";
+import GetRoomParticipants from "./events/room-participants.event";
 
 const app = express();
 
@@ -31,15 +32,9 @@ export const adapter = io.of("").adapter;
 export const rooms = adapter.rooms;
 
 adapter.on("join-room", (roomId, socketId) => {
-	const socket = getSocket(socketId);
-});
-
-adapter.on("rooms-participants", (...d: any) => {
-	console.log({ d });
-});
-
-io.on("rooms-participants", (...d: any) => {
-	console.log({ d });
+	const socket = getSocket(socketId)!;
+	const participants = GetRoomParticipants(socket);
+	socket.emit("rooms-participants", participants);
 });
 
 io.on("connection", connectionEvent);
