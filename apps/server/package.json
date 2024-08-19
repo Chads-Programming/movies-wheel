@@ -7,12 +7,14 @@
 		"dev": "nodemon src/app.ts"
 	},
 	"dependencies": {
+		"@repo/shared": "workspace:*",
+		"axios": "^1.7.3",
 		"body-parser": "^1.20.2",
 		"cors": "^2.8.5",
+		"dotenv": "^16.4.5",
 		"express": "^4.19.2",
 		"nodemon": "^3.1.4",
 		"socket.io": "^4.7.5",
-		"@repo/shared": "workspace:*",
 		"ts-node": "^10.9.2",
 		"uuid": "^10.0.0",
 		"zod": "^3.23.8"

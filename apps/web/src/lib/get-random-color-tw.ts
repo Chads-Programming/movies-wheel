@@ -9,6 +9,5 @@ const ColorPicker = new TailwindColor({
 
 export default function getRandomColorTailwind(): string {
 	const color = ColorPicker.pick();
-	console.log({ color });
 	return color;
 }

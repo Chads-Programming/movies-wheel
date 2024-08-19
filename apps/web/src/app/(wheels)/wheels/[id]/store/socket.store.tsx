@@ -9,7 +9,7 @@ import { z } from "zod";
 type Profile = z.infer<typeof ProfileSetupDto>;
 
 interface SocketContextValues {
-	socketClient: Socket | null;
+	socketClient: Socket;
 	participants: Profile[];
 	socketError: boolean | null;
 	connectSocket: (profile: Profile) => void;
@@ -25,7 +25,9 @@ interface ISocketProviderProps {
 }
 export const SocketProvider = ({ children }: ISocketProviderProps) => {
 	const { id } = useParams() as { id: string };
-	const [socketClient, setSocketClient] = useState<Socket | null>(null);
+	const [socketClient, setSocketClient] = useState<Socket>(
+		null as unknown as Socket,
+	);
 	const [participants, setParticipants] = useState<Profile[]>([]);
 
 	const socketError = useRef<boolean | null>(null);
@@ -33,7 +35,7 @@ export const SocketProvider = ({ children }: ISocketProviderProps) => {
 	function getParticipants() {
 		socketClient!
 			.emitWithAck("rooms-participants-with-ack")
-			.then((res) => console.log({ res }) && setParticipants(res));
+			.then((res) => setParticipants(res));
 	}
 
 	function connectSocket(profile: Profile) {
@@ -45,25 +47,23 @@ export const SocketProvider = ({ children }: ISocketProviderProps) => {
 		});
 
 		socket.on("setup-completed", () => {
-			console.log("setup-completed", { socket });
 			setSocketClient(socket);
 			socketError.current = false;
 		});
 
 		socket.on("rooms-participants", (data: any) => {
-			console.log({ data });
 			setParticipants(data);
 		});
 
 		socket.on("connection-error", (msg: string) => {
 			socketError.current = true;
 			if (msg) toast.error(msg);
-			setSocketClient(null);
+			setSocketClient(null as unknown as Socket);
 		});
 
 		socket.on("disconnect", () => {
 			if (socketError.current) return;
-			setSocketClient(null);
+			setSocketClient(null as unknown as Socket);
 			toast.error("Disconnecting from server");
 		});
 	}

@@ -39,7 +39,6 @@ export default function Uploader({
 
 					const imgData = await fileToImageData(file); // Call the function
 					const colors = await extractColors(imgData);
-					console.log({ colors });
 					const color = colors.sort((a, b) => (a.area < b.area ? 1 : -1))[0];
 					// then start the upload
 					await startUpload([file], { color: color.hex });

@@ -27,3 +27,10 @@ export const getRoomParticipants = (room: Room): ProfileWithAdmin[] => {
 		.filter(Boolean) as ProfileWithAdmin[];
 	return participants;
 };
+
+export function getRoomParticipantsByRoomId(roomId: string) {
+	const room = getRoom(roomId);
+	if (!room) return;
+	const participants = getRoomParticipants(room);
+	return participants;
+}

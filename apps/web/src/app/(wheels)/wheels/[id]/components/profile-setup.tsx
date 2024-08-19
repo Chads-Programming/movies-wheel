@@ -35,12 +35,11 @@ export default function ProfileSetup({ setupProfile }: ProfileSetupProps) {
 	const color = watch("color");
 
 	function onSubmit(data: Profile) {
-		console.log({ data });
 		setupProfile(data);
 	}
 
 	return (
-		<div className="h-screen w-screen flex justify-center items-center">
+		<div className="flex justify-center items-center">
 			<Form {...form}>
 				<form
 					className="grid place-items-center gap-2"

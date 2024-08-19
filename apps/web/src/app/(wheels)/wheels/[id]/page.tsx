@@ -3,54 +3,22 @@
 import { useParams } from "next/navigation";
 import ProfileSetup from "./components/profile-setup";
 import useSocket from "@/hooks/useSocket";
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ParticipantList from "./components/participant-list/participant-list";
+import MoviePicker from "./components/movie-picker/movie-picker";
 
 export default function WheelPage() {
 	const { id } = useParams() as { id: string };
-	const { socketClient, connectSocket, getParticipants, participants } =
-		useSocket();
+	const { socketClient, connectSocket, participants } = useSocket();
 	if (!socketClient?.connected)
 		return <ProfileSetup setupProfile={connectSocket} />;
 
 	return (
-		<div className="p-2">
-			<div className="flex gap-2 items-center justify-end">
-				<Button onClick={getParticipants}>Get Participants</Button>
-				<Button onClick={() => socketClient.disconnect()}>
-					<LogOut className="h-6 w-6" />
-				</Button>
+		<div className="p-2 h-full w-full flex">
+			<ParticipantList participants={participants} />
+			<div className="items-center text-center self-center flex-1 gap-6 flex flex-col justify-center">
+				<MoviePicker />
 			</div>
-			<div className="flex flex-col">
-				{participants.map((participant) => (
-					<div className="flex items-center gap-2">
-						<Avatar className="w-16 h-16">
-							<AvatarImage
-								className="rounded-full"
-								style={{
-									borderStyle: "solid",
-									borderWidth: "5px",
-									borderColor: participant.color,
-								}}
-								color="orange"
-								src={participant.profilePic}
-							/>
-							<AvatarFallback style={{ background: participant.color }}>
-								{nameToLogo(participant.name)}
-							</AvatarFallback>
-						</Avatar>
-						<span>- {participant.name}</span>
-					</div>
-				))}
-			</div>
-			this is your wheel id: {id}{" "}
 		</div>
 	);
 }
 
-function nameToLogo(word: string) {
-	const [name, lastName] = word.split(" ");
-	if (!lastName) return name.slice(0, 2);
-	return [name[0], lastName[0]].join(" ");
-}

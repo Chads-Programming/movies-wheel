@@ -3,10 +3,13 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 import bodyParser from "body-parser";
-import wheelsRouter from "./routers/wheels.controller";
-import { getSocket } from "./utils/socket";
+import wheelsRouter from "./routers/wheels.router";
 import { connectionEvent } from "./events/connection.event";
-import GetRoomParticipants from "./events/room-participants.event";
+import { getRoomParticipantsByRoomId } from "./utils/rooms";
+import dotenv from "dotenv";
+import moviesRouter from "./routers/movies.router";
+dotenv.config();
+
 
 const app = express();
 
@@ -19,6 +22,7 @@ app.use(
 app.use(bodyParser.json());
 
 app.use("/wheels", wheelsRouter);
+app.use("/movies", moviesRouter);
 
 const httpServer = createServer(app);
 
@@ -32,9 +36,13 @@ export const adapter = io.of("").adapter;
 export const rooms = adapter.rooms;
 
 adapter.on("join-room", (roomId, socketId) => {
-	const socket = getSocket(socketId)!;
-	const participants = GetRoomParticipants(socket);
-	socket.emit("rooms-participants", participants);
+	const participants = getRoomParticipantsByRoomId(roomId);
+	io.to(roomId).emit("rooms-participants", participants);
+});
+
+adapter.on("leave-room", (roomId, socketId) => {
+	const participants = getRoomParticipantsByRoomId(roomId);
+	io.to(roomId).emit("rooms-participants", participants);
 });
 
 io.on("connection", connectionEvent);

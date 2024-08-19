@@ -12,14 +12,11 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { CreateWheelDto } from "@repo/shared/src/dtos/create-wheel.dto";
-
-const api = axios.create({
-	baseURL: process.env.NEXT_PUBLIC_API_URL!,
-});
+import { api } from "@/lib/api";
 
 const val = Math.random().toFixed(4);
 
@@ -37,7 +34,6 @@ export default function Home() {
 
 	async function onSubmit(values: z.infer<typeof CreateWheelDto>) {
 		try {
-			console.log({ values });
 			const {
 				data: { id },
 			} = await api.post<{ id: string }>("/wheels", values);
