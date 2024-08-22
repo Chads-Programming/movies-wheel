@@ -46,9 +46,8 @@ export default function MoviePicker() {
 
 		setConfirmDialog({
 			...commonArgs,
-			title: "",
+			title: "Are you sure?",
 			callback() {
-				const { socketClient } = useSocket();
 				return socketClient.emit("change-stage", "roulette");
 			},
 		});

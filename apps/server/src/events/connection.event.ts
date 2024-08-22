@@ -123,6 +123,9 @@ export const connectionEvent = async (socket: Socket) => {
 			}
 			setRoomStage(stage, roomId);
 			io.to(roomId).emit("stage-change", stage);
+			return response({
+				error: false,
+			});
 		});
 
 		socket.on("spin-wheel", () => {
