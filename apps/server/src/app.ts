@@ -10,7 +10,6 @@ import dotenv from "dotenv";
 import moviesRouter from "./routers/movies.router";
 dotenv.config();
 
-
 const app = express();
 
 app.use(
@@ -35,12 +34,12 @@ export const io = new Server(httpServer, {
 export const adapter = io.of("").adapter;
 export const rooms = adapter.rooms;
 
-adapter.on("join-room", (roomId, socketId) => {
+adapter.on("join-room", (roomId) => {
 	const participants = getRoomParticipantsByRoomId(roomId);
 	io.to(roomId).emit("rooms-participants", participants);
 });
 
-adapter.on("leave-room", (roomId, socketId) => {
+adapter.on("leave-room", (roomId) => {
 	const participants = getRoomParticipantsByRoomId(roomId);
 	io.to(roomId).emit("rooms-participants", participants);
 });

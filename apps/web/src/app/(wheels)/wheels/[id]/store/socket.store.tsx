@@ -1,34 +1,51 @@
 "use client";
-import { ProfileSetupDto } from "@repo/shared";
+import { Maybe } from "@/types/maybe.type";
+import { Profile, ProfileWithAdmin, Stage } from "@repo/shared";
 import { useParams } from "next/navigation";
-import { createContext, useRef, useState } from "react";
+import { createContext, useMemo, useRef, useState } from "react";
 import { Socket, io } from "socket.io-client";
 import { toast } from "sonner";
-import { z } from "zod";
 
-type Profile = z.infer<typeof ProfileSetupDto>;
+type StageOrUndefined = Maybe<Stage>;
+
+interface SocketContextActions {
+	connectSocket: (profile: Profile) => void;
+	getParticipants: () => void;
+	changeStage: (stage: Stage) => void;
+}
 
 interface SocketContextValues {
 	socketClient: Socket;
-	participants: Profile[];
+	participants: ProfileWithAdmin[];
 	socketError: boolean | null;
-	connectSocket: (profile: Profile) => void;
-	getParticipants: () => void;
+	isAdmin: boolean;
+	stage: StageOrUndefined;
 }
 
-export const SocketContext = createContext<SocketContextValues>(
-	{} as SocketContextValues,
+interface SocketContextData extends SocketContextActions, SocketContextValues {}
+
+export const SocketContext = createContext<SocketContextData>(
+	{} as SocketContextData,
 );
 
 interface ISocketProviderProps {
 	children: React.ReactNode;
 }
+
 export const SocketProvider = ({ children }: ISocketProviderProps) => {
 	const { id } = useParams() as { id: string };
+	const [stage, setStage] = useState<StageOrUndefined>(undefined);
 	const [socketClient, setSocketClient] = useState<Socket>(
 		null as unknown as Socket,
 	);
-	const [participants, setParticipants] = useState<Profile[]>([]);
+	const [participants, setParticipants] = useState<ProfileWithAdmin[]>([]);
+	const isAdmin = useMemo(() => {
+		const foundSocket = participants.find(
+			(participant) => participant.id === socketClient?.id,
+		);
+		console.log({ foundSocket, participants });
+		return Boolean(foundSocket?.isAdmin);
+	}, [participants, socketClient]);
 
 	const socketError = useRef<boolean | null>(null);
 
@@ -36,6 +53,10 @@ export const SocketProvider = ({ children }: ISocketProviderProps) => {
 		socketClient!
 			.emitWithAck("rooms-participants-with-ack")
 			.then((res) => setParticipants(res));
+	}
+
+	function changeStage(stage: Stage) {
+		socketClient!.emit("change-stage", stage);
 	}
 
 	function connectSocket(profile: Profile) {
@@ -46,10 +67,20 @@ export const SocketProvider = ({ children }: ISocketProviderProps) => {
 			},
 		});
 
-		socket.on("setup-completed", () => {
-			setSocketClient(socket);
-			socketError.current = false;
-		});
+		socket.on("setup-completed", () =>
+			socket
+				.timeout(8000)
+				.emitWithAck("stage-with-ack")
+				.then((stage) => {
+					setStage(stage);
+				})
+				.finally(() => {
+					setSocketClient(socket);
+					socketError.current = false;
+				}),
+		);
+
+		socket.on("stage-change", (val: Stage) => setStage(val));
 
 		socket.on("rooms-participants", (data: any) => {
 			setParticipants(data);
@@ -76,6 +107,9 @@ export const SocketProvider = ({ children }: ISocketProviderProps) => {
 				socketClient,
 				connectSocket,
 				getParticipants,
+				stage,
+				isAdmin,
+				changeStage,
 			}}
 		>
 			{children}

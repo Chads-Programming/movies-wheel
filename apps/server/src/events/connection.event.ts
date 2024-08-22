@@ -1,16 +1,17 @@
-import { Profile, ProfileSetupDto } from "@repo/shared";
+import { Profile, ProfileSetupDto, Stage } from "@repo/shared";
 import { BaseSocket } from "../types/socket.type";
 import {
 	getRoom,
 	getRoomParticipantsByRoomId,
 	isEmptyRoom,
 	isFullRoom,
+	setRoomStage,
 } from "../utils/rooms";
-import { addAdmin, addProfile, modifySocketData } from "../utils/socket";
+import { addAdmin, addProfile, isRoomAdmin } from "../utils/socket";
 import GetRoomParticipants from "./room-participants.event";
 import { io } from "../app";
-import { PickMovieDto } from "../dtos/pick-movie.dto";
-import getMovieData from "../utils/movies/get-movies-data";
+import MoviePickeEvent from "./movie-pick.event";
+import _ from "lodash";
 
 type Socket = BaseSocket<any>;
 
@@ -32,6 +33,18 @@ function parseProfile(data: unknown): Profile {
 	}
 }
 
+function checkRoom(roomId: string) {
+	const room = getRoom(roomId);
+	if (!room) throw new ConnectionError("Room not found");
+
+	const isFull = isFullRoom(roomId);
+
+	if (isFull) throw new ConnectionError("Room is full");
+	const isAdmin = isEmptyRoom(roomId);
+
+	return { isAdmin, room };
+}
+
 export const connectionEvent = async (socket: Socket) => {
 	const connectionError = (msg?: string) => {
 		socket.emit("connection-error", msg);
@@ -44,15 +57,8 @@ export const connectionEvent = async (socket: Socket) => {
 		const profile = parseProfile(socket.handshake.query?.profile);
 		if (typeof roomId !== "string") throw new ConnectionError();
 
-		const room = getRoom(roomId);
-		if (!room) throw new ConnectionError("Room not found");
-
-		const isFull = isFullRoom(roomId);
-
-		if (isFull) throw new ConnectionError("Room is full");
-
 		const socketId = socket.id;
-		const isAdmin = isEmptyRoom(roomId);
+		const { isAdmin } = checkRoom(roomId);
 
 		if (isAdmin) addAdmin(socketId, roomId, profile);
 		else addProfile(socketId, roomId, profile);
@@ -69,34 +75,39 @@ export const connectionEvent = async (socket: Socket) => {
 			return socket.emit("rooms-participants", participants);
 		});
 
-		socket.on("movie-pick-with-ack", async (data: unknown, response) => {
-			try {
-				const movie = PickMovieDto.parse(data);
-				const movieData = await getMovieData(movie.id);
-				if (!movieData) return null;
-				modifySocketData(socketId, {
-					movie: {
-						id: movieData.id,
-						title: movieData.title,
-						desc: movieData.overview,
-						thumbnail: movieData.poster_path,
-						rating: movieData.vote_average,
-						duration: movieData.runtime,
-					},
-				});
-				const participants = getRoomParticipantsByRoomId(roomId);
-				io.to(roomId).emit("rooms-participants", participants);
-				return response({
-					data: movie,
-				});
-			} catch (error) {
-				console.log(error);
-				response({
-					error: true,
-					errorMsg: "Movie Parse Error",
-					data: null,
-				});
-			}
+		socket.on(
+			"movie-pick-with-ack",
+			async (data, response) =>
+				await MoviePickeEvent(socketId, roomId, data, response),
+		);
+
+		socket.on("stage-with-ack", async (response) => {
+			const room = getRoom(roomId)!;
+			return response(room.data.stage);
+		});
+
+		socket.on("change-stage", async (stage: Stage) => {
+			const isAdmin = isRoomAdmin(socketId, roomId);
+			console.log({ isAdmin });
+			if (!isAdmin) return;
+			setRoomStage(stage, roomId);
+			io.to(roomId).emit("stage-change", stage);
+		});
+
+		socket.on("spin-wheel", () => {
+			const isAdmin = isRoomAdmin(socketId, roomId);
+			if (!isAdmin) return;
+			const participants = getRoomParticipantsByRoomId(roomId)!;
+			const participant = participants.filter(
+				(participant) => participant.movie,
+			);
+			const randomParticipant = _.sample(participant);
+			if (!randomParticipant) return;
+
+			io.to(roomId).emit("wheel-spin", {
+				...randomParticipant.movie!,
+				participantId: randomParticipant.id,
+			});
 		});
 
 		socket.emit("setup-completed");

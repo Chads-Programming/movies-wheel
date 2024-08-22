@@ -1,6 +1,6 @@
+import { ProfileWithAdmin, Stage } from "@repo/shared";
 import { rooms } from "../app";
-import { Room } from "../types/room.type";
-import { ProfileWithAdmin } from "../types/socket.type";
+import { Room, RoomData } from "../types/room.type";
 import { getSocket } from "./socket";
 
 export const getRoom = (roomId: string): null | Room => {
@@ -33,4 +33,24 @@ export function getRoomParticipantsByRoomId(roomId: string) {
 	if (!room) return;
 	const participants = getRoomParticipants(room);
 	return participants;
+}
+
+export function setRoomData(roomData: RoomData, roomId: string) {
+	let set = getRoom(roomId) as any;
+	set ??= new Set<string>();
+
+	Object.defineProperty(set, "data", {
+		value: roomData,
+		configurable: true,
+		enumerable: true,
+	});
+
+	rooms.set(roomId, set);
+
+	return roomData;
+}
+
+export function setRoomStage(stage: Stage, roomId: string) {
+	const room = getRoom(roomId)!;
+	return setRoomData({ ...room.data, stage }, roomId);
 }

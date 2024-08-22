@@ -6,7 +6,7 @@ export const CreateWheelDto = z.object({
 		.string()
 		.or(z.number())
 		.transform((arg) => +arg)
-		.refine((arg) => !(Number.isNaN(arg) || arg < 1 || arg > 8), {
+		.refine((arg) => !(Number.isNaN(arg) || arg <= 1 || arg > 8), {
 			message: "Participant limit must be over 1 and below 8",
 		}),
 });

@@ -25,7 +25,7 @@ export default function Home() {
 
 	const form = useForm({
 		defaultValues: {
-			participantLimit: 1,
+			participantLimit: 2,
 			wheelName: `Testing ${val}`,
 		},
 		reValidateMode: "onChange",

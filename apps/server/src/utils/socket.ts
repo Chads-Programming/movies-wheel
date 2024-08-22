@@ -1,7 +1,7 @@
 import { Profile } from "@repo/shared";
 import { SocketProfile } from "../types/socket.type";
-import { io, rooms } from "../app";
-import { getRoom } from "./rooms";
+import { io } from "../app";
+import { getRoom, getRoomParticipantsByRoomId } from "./rooms";
 import { Room } from "../types/room.type";
 
 export const getSocket = (socketId: string): SocketProfile | undefined =>
@@ -15,7 +15,7 @@ const addProfileToSocket = (
 ): SocketProfile => {
 	const socket = getSocket(socketId)!;
 	socket["data"] = {
-		profile: { ...profile, isAdmin },
+		profile: { ...profile, id: socketId, isAdmin },
 		roomId,
 	};
 	return socketId as unknown as SocketProfile;
@@ -50,4 +50,10 @@ export function modifySocketData(
 	const oldProfile = socket.data.profile;
 	socket.data.profile = { ...oldProfile, ...profile };
 	return socket as unknown as SocketProfile;
+}
+
+export function isRoomAdmin(socketId: string, roomId: string) {
+	const participants = getRoomParticipantsByRoomId(roomId)!;
+	const admin = participants.find((participant) => participant.isAdmin);
+	return admin?.id === socketId;
 }

@@ -1,17 +1,17 @@
-import { Profile } from "@repo/shared";
+import { ProfileWithAdmin } from "@repo/shared";
 import ParticipantItem from "./participant-item";
 
 interface ParticipantListProps {
-	participants: Profile[];
+	participants: ProfileWithAdmin[];
 }
 
 export default function ParticipantList({
 	participants,
 }: ParticipantListProps) {
 	return (
-		<div className="flex flex-col gap-2 t-0 l-2 absolute">
+		<div className="flex flex-col gap-2">
 			{participants.map((participant) => (
-				<ParticipantItem participant={participant} />
+				<ParticipantItem participant={participant} key={participant.id} />
 			))}
 		</div>
 	);

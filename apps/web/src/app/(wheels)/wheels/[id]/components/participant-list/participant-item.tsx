@@ -6,11 +6,12 @@ import {
 	HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import getPosterImage from "@/lib/get-poster-image";
-import { Movie, Profile } from "@repo/shared";
+import { Movie, Profile, ProfileWithAdmin } from "@repo/shared";
 import humanizeDuration from "humanize-duration";
+import { Crown } from "lucide-react";
 
 interface ParticipantItemProps {
-	participant: Profile;
+	participant: ProfileWithAdmin;
 }
 
 export default function ParticipantItem({ participant }: ParticipantItemProps) {
@@ -19,7 +20,14 @@ export default function ParticipantItem({ participant }: ParticipantItemProps) {
 		<div className="flex items-center gap-2">
 			<ParticipantLogo participant={participant} />
 			<div className="flex flex-col gap-2">
-				<span>- {capitalize(participant.name)}</span>
+				<div className="flex gap-1">
+					<span>{capitalize(participant.name)}</span>
+					{participant.isAdmin && (
+						<Badge className="p-[0.3rem] rounded-full">
+							<Crown color="yellow" className="h-[15px] w-[15px]" />
+						</Badge>
+					)}
+				</div>
 				{!movie ? (
 					<span className="animate-pulse font-semibold text-sm">
 						Picking...
@@ -59,7 +67,11 @@ function PickedMovie({
 						{title} {rating && <Badge>{rating.toFixed(2)}</Badge>}
 					</h3>
 					<p className="line-clamp-[8]">{desc}</p>
-					{duration && <p className="mt-3 font-bold text-[#666]">{humanizeDuration(duration * 60000)}</p>}
+					{duration && (
+						<p className="mt-3 font-bold text-[#666]">
+							{humanizeDuration(duration * 60000)}
+						</p>
+					)}
 				</div>
 			</HoverCardContent>
 		</HoverCard>

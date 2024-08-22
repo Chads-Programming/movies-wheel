@@ -1,6 +1,6 @@
 import { AsyncPaginate } from "react-select-async-paginate";
 import { OptionType } from "./movie-select.type";
-import fetchMovies from "../../utils/fetch-movies";
+import fetchMovies from "../../../utils/fetch-movies";
 
 interface MovieSelectProps {
 	value: OptionType | null;

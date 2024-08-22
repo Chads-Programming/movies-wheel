@@ -15,16 +15,20 @@ import { ColorPicker } from "@/components/ui/color-picker";
 import Uploader from "@/components/ui/uploader";
 import { toast } from "sonner";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import randomColor from "randomcolor";
 
 interface ProfileSetupProps {
 	setupProfile: (data: Profile) => void;
 }
+
+const initialColor = randomColor();
+
 export default function ProfileSetup({ setupProfile }: ProfileSetupProps) {
 	const form = useForm({
 		resolver: zodResolver(ProfileSetupDto),
 		defaultValues: {
-			name: "testtt",
-			color: "#cbd",
+			name: "Testing",
+			color: initialColor,
 			profilePic:
 				"https://utfs.io/f/5456be80-2c77-4409-b8c0-690519831ac2-23ti.png",
 		},
@@ -39,7 +43,7 @@ export default function ProfileSetup({ setupProfile }: ProfileSetupProps) {
 	}
 
 	return (
-		<div className="flex justify-center items-center">
+		<div className="flex justify-center items-center centered-absolute">
 			<Form {...form}>
 				<form
 					className="grid place-items-center gap-2"
@@ -65,7 +69,6 @@ export default function ProfileSetup({ setupProfile }: ProfileSetupProps) {
 											setValue("profilePic", file.url);
 										}}
 										onUploadError={(error: Error) => {
-											// Do something with the error.
 											toast.error("Something went wrong!", {
 												description: error?.message,
 											});
