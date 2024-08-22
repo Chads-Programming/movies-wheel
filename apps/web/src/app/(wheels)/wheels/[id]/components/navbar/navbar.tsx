@@ -22,7 +22,7 @@ export default function Navbar() {
 				Home
 			</Button>
 			{socketClient && (
-				<div className="flex items-center">
+				<div className="flex items-center gap-2">
 					<ShareWheelLink>
 						<Button variant="outline">
 							<Link className="h-6 w-6" />

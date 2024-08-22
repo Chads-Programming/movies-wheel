@@ -1,4 +1,4 @@
-import { Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -13,8 +13,30 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useEffect, useState } from "react";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function ShareWheelLink({ children }: React.PropsWithChildren) {
+	const [hasCopied, setHasCopied] = useState(false);
+
+	useEffect(() => {
+		setTimeout(() => {
+			setHasCopied(false);
+		}, 5000);
+	}, [hasCopied]);
+	function onCopy() {
+		const url = window.location.href;
+		if (!(navigator && navigator.clipboard && navigator.clipboard.writeText))
+			return Promise.reject("The Clipboard API is not available.");
+
+		setHasCopied(true);
+		return navigator.clipboard.writeText(url);
+	}
 	return (
 		<Dialog>
 			<DialogTrigger asChild>{children}</DialogTrigger>
@@ -22,7 +44,7 @@ export function ShareWheelLink({ children }: React.PropsWithChildren) {
 				<DialogHeader>
 					<DialogTitle>Share link</DialogTitle>
 					<DialogDescription>
-						Anyone who has this link will be able to view this.
+						Anyone who has this link will be able to join your wheel.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex items-center space-x-2">
@@ -30,16 +52,31 @@ export function ShareWheelLink({ children }: React.PropsWithChildren) {
 						<Label htmlFor="link" className="sr-only">
 							Link
 						</Label>
-						<Input
-							id="link"
-							defaultValue="https://ui.shadcn.com/docs/installation"
-							readOnly
-						/>
+						<Input id="link" defaultValue={window.location.href} readOnly />
 					</div>
-					<Button type="submit" size="sm" className="px-3">
-						<span className="sr-only">Copy</span>
-						<Copy className="h-4 w-4" />
-					</Button>
+					<TooltipProvider>
+						<Tooltip open={hasCopied}>
+							<TooltipContent className="-ml-4">
+								<p>Copied!</p>
+							</TooltipContent>
+							<TooltipTrigger>
+								<Button
+									variant={hasCopied ? "outline" : "default"}
+									type="submit"
+									size="sm"
+									className="px-3"
+									onClick={onCopy}
+								>
+									<span className="sr-only">Copy</span>
+									{hasCopied ? (
+										<Check className="h-4 w-4" />
+									) : (
+										<Copy className="h-4 w-4" />
+									)}
+								</Button>
+							</TooltipTrigger>
+						</Tooltip>
+					</TooltipProvider>
 				</div>
 				<DialogFooter className="sm:justify-start">
 					<DialogClose asChild>
