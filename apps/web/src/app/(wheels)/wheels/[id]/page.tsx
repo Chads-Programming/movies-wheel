@@ -12,7 +12,7 @@ export default function WheelPage() {
 	if (!socketClient?.connected)
 		return (
 			<div className="p-2 h-full w-full flex justify-center">
-				<ProfileSetup setupProfile={connectSocket} />;
+				<ProfileSetup setupProfile={connectSocket} />
 			</div>
 		);
 

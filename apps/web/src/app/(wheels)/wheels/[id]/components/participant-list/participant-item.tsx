@@ -5,6 +5,12 @@ import {
 	HoverCardContent,
 	HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import getPosterImage from "@/lib/get-poster-image";
 import { Movie, Profile, ProfileWithAdmin } from "@repo/shared";
 import humanizeDuration from "humanize-duration";
@@ -22,11 +28,7 @@ export default function ParticipantItem({ participant }: ParticipantItemProps) {
 			<div className="flex flex-col gap-2">
 				<div className="flex gap-1">
 					<span>{capitalize(participant.name)}</span>
-					{participant.isAdmin && (
-						<Badge className="p-[0.3rem] rounded-full">
-							<Crown color="yellow" className="h-[15px] w-[15px]" />
-						</Badge>
-					)}
+					{participant.isAdmin && <AdminBadge />}
 				</div>
 				{!movie ? (
 					<span className="animate-pulse font-semibold text-sm">
@@ -105,3 +107,20 @@ function nameToLogo(word: string) {
 }
 
 const capitalize = (word: string) => word[0].toUpperCase() + word.substring(1);
+
+function AdminBadge() {
+	return (
+		<TooltipProvider>
+			<Tooltip>
+				<TooltipTrigger>
+					<Badge className="p-[0.3rem] rounded-full">
+						<Crown color="yellow" className="h-[15px] w-[15px]" />
+					</Badge>
+				</TooltipTrigger>
+				<TooltipContent>
+					<p>Owner</p>
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
+	);
+}

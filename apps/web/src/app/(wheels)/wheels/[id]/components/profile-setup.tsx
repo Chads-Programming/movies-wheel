@@ -16,12 +16,23 @@ import Uploader from "@/components/ui/uploader";
 import { toast } from "sonner";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import randomColor from "randomcolor";
+import _ from "lodash";
+
+const images = [
+	"https://utfs.io/f/0013ee06-b14e-416d-bfc9-fae4d22077b8-9ch3om.png",
+	"https://utfs.io/f/5456be80-2c77-4409-b8c0-690519831ac2-23ti.png",
+	"https://utfs.io/f/91be928f-54ec-4855-9c67-4ce51dc73a4a-npjhe0.png",
+	"https://utfs.io/f/9d691f7f-0e25-45b5-aa5d-af7699ff29ac-ugazk9.jpg",
+	"https://utfs.io/f/049981dc-0935-4758-9ab1-8e44dfa41fe7-qlw0jq.png",
+];
 
 interface ProfileSetupProps {
 	setupProfile: (data: Profile) => void;
 }
 
-const initialColor = randomColor();
+const initialColor = randomColor({
+	luminosity: "bright",
+});
 
 export default function ProfileSetup({ setupProfile }: ProfileSetupProps) {
 	const form = useForm({
@@ -29,8 +40,7 @@ export default function ProfileSetup({ setupProfile }: ProfileSetupProps) {
 		defaultValues: {
 			name: "Testing",
 			color: initialColor,
-			profilePic:
-				"https://utfs.io/f/5456be80-2c77-4409-b8c0-690519831ac2-23ti.png",
+			profilePic: _.sample(images),
 		},
 	});
 
