@@ -88,8 +88,39 @@ export const connectionEvent = async (socket: Socket) => {
 
 		socket.on("change-stage", async (stage: Stage) => {
 			const isAdmin = isRoomAdmin(socketId, roomId);
-			console.log({ isAdmin });
 			if (!isAdmin) return;
+			setRoomStage(stage, roomId);
+			io.to(roomId).emit("stage-change", stage);
+		});
+
+		socket.on("change-stage-with-ack", async (stage: Stage, response) => {
+			const isAdmin = isRoomAdmin(socketId, roomId);
+			if (!isAdmin)
+				return response({
+					error: true,
+					message: "You have to be an admin to change-stage",
+				});
+
+			if (stage === "roulette") {
+				const participants = getRoomParticipantsByRoomId(roomId)!;
+				const readyPicks = participants.filter(
+					(participant) => participant.movie,
+				).length;
+
+				if (!readyPicks)
+					return response({
+						error: true,
+						message: "At least 1 movie has to be picked",
+					});
+
+				const pendingPicksCount = participants.length - readyPicks;
+				if (pendingPicksCount)
+					return response({
+						error: true,
+						message: `There are ${pendingPicksCount} pending picks`,
+						requiresConfirmation: true,
+					});
+			}
 			setRoomStage(stage, roomId);
 			io.to(roomId).emit("stage-change", stage);
 		});

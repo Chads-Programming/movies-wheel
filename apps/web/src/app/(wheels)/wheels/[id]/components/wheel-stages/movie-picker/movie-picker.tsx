@@ -4,11 +4,18 @@ import { useEffect, useState } from "react";
 import MovieSelect from "./movie-select";
 import { OptionType } from "./movie-select.type";
 import PickedMovie from "./picked-movie";
+import { toast } from "sonner";
+import StageDialog, { ConfirmationState } from "./stage-dialog";
 
 export default function MoviePicker() {
 	const { socketClient, changeStage, isAdmin } = useSocket();
 
 	const [value, onChange] = useState<OptionType | null>(null);
+	const [confirmDialog, setConfirmDialog] = useState<ConfirmationState>({
+		isOpen: false,
+		message: "",
+		title: "",
+	});
 	const [isPicked, setIsPicked] = useState(false);
 	useEffect(() => {
 		setIsPicked(false);
@@ -21,6 +28,30 @@ export default function MoviePicker() {
 		socketClient
 			.emitWithAck("movie-pick-with-ack", movie)
 			.then(() => setIsPicked(true));
+	}
+
+	async function switchToRoulette() {
+		const res = await changeStage("roulette");
+
+		if (!res?.error) return;
+		const commonArgs = {
+			isOpen: true,
+			message: res.message,
+		};
+		if (!res.requiresConfirmation)
+			return setConfirmDialog({
+				...commonArgs,
+				title: "Error while changing stage",
+			});
+
+		setConfirmDialog({
+			...commonArgs,
+			title: "",
+			callback() {
+				const { socketClient } = useSocket();
+				return socketClient.emit("change-stage", "roulette");
+			},
+		});
 	}
 
 	return (
@@ -38,15 +69,22 @@ export default function MoviePicker() {
 					</Button>
 					{isAdmin && (
 						<Button
-							variant="destructive"
-							onClick={() => changeStage("roulette")}
+							variant="outline"
+							onClick={switchToRoulette}
 							className="w-full"
 						>
-							Change Stage
+							Switch to Roulette
 						</Button>
 					)}
 				</div>
 			</div>
+			<StageDialog
+				changeIsOpen={setConfirmDialog}
+				isOpen={confirmDialog.isOpen}
+				message={confirmDialog.message}
+				title={confirmDialog.title}
+				action={confirmDialog.callback}
+			/>
 			<PickedMovie value={value} />
 		</div>
 	);

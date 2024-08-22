@@ -5,24 +5,7 @@ import { useParams } from "next/navigation";
 import { createContext, useMemo, useRef, useState } from "react";
 import { Socket, io } from "socket.io-client";
 import { toast } from "sonner";
-
-type StageOrUndefined = Maybe<Stage>;
-
-interface SocketContextActions {
-	connectSocket: (profile: Profile) => void;
-	getParticipants: () => void;
-	changeStage: (stage: Stage) => void;
-}
-
-interface SocketContextValues {
-	socketClient: Socket;
-	participants: ProfileWithAdmin[];
-	socketError: boolean | null;
-	isAdmin: boolean;
-	stage: StageOrUndefined;
-}
-
-interface SocketContextData extends SocketContextActions, SocketContextValues {}
+import { SocketContextData, StageOrUndefined } from "./socket-store.type";
 
 export const SocketContext = createContext<SocketContextData>(
 	{} as SocketContextData,
@@ -55,8 +38,12 @@ export const SocketProvider = ({ children }: ISocketProviderProps) => {
 			.then((res) => setParticipants(res));
 	}
 
-	function changeStage(stage: Stage) {
-		socketClient!.emit("change-stage", stage);
+	function changeStage(
+		stage: Stage,
+	): Promise<Maybe<{ error: boolean; message: string }>> {
+		return socketClient!
+			.timeout(10000)
+			.emitWithAck("change-stage-with-ack", stage);
 	}
 
 	function connectSocket(profile: Profile) {
